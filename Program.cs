@@ -7,7 +7,7 @@ using htopsharp;
 class Demo {
 	static void Main()
 	{
-		//Application.UseSystemConsole = true;
+		// Application.UseSystemConsole = true;
 		Application.Init();
 
 		var top = Application.Top;
@@ -31,13 +31,65 @@ class Demo {
 			})
 		});
 
-		//ShowEntries(win);
+		TopPart(win);
 
 		CreateEditor(win);
 
 		top.Add(win, menu);
 		top.Add(menu);
 		Application.Run();
+	}
+
+	static void TopPart(View container)
+	{
+		var cc = new ColorScheme();
+		cc.Normal = Terminal.Gui.Attribute.Make(Color.Red, Color.Black);
+		cc.Focus = Terminal.Gui.Attribute.Make(Color.White, Color.DarkGray);
+
+		var core0 = new HtopProgressBar()
+		{
+			Height = 1,
+			Width = Dim.Fill()
+		};
+
+		var core1 = new HtopProgressBar()
+		{
+			Height = 1,
+			Y = 1,
+			Width = Dim.Fill()
+		};
+
+		core0.ColorScheme = cc;
+		core1.ColorScheme = cc;
+
+		float fraction = 0;
+
+		bool timer(MainLoop caller)
+		{
+			fraction += 0.05f;
+
+			if (fraction > 1)
+				fraction = 0;
+
+			core0.Fraction = fraction;
+			core1.Fraction = fraction;
+			return true;
+		}
+
+		Application.MainLoop.AddTimeout(TimeSpan.FromMilliseconds(300), timer);
+
+		FrameView frame = new FrameView("CPU")
+		{
+			X = 0,
+			Y = 0,
+			Width = 50,
+			Height = 10
+		};
+
+		frame.Add(core0);
+		frame.Add(core1);
+
+		container.Add(frame);
 	}
 
 	static void ShowEntries(View container)
@@ -212,8 +264,8 @@ class Demo {
 
 		FrameView frame = new FrameView("Process list")
 		{
-			Y = Pos.Bottom(parent) - 30,
-			Height = 30 - 3
+			Y = Pos.Bottom(parent) - 20,
+			Height = 20 - 3
 		};
 
 		frame.Add(text);
