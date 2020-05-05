@@ -31,16 +31,23 @@ class Demo {
 			})
 		});
 
-		TopPart(win);
+		View topPart = TopPart();
 
-		CreateEditor(win);
+		View editorPart = CreateEditor();
+
+		editorPart.X = 0 + 1;
+		editorPart.Y = Pos.Bottom(topPart) + 1;
+		editorPart.Width = Dim.Fill(1);
+		editorPart.Height = Dim.Fill(1);
+
+		win.Add(topPart, editorPart);
 
 		top.Add(win, menu);
 		top.Add(menu);
 		Application.Run();
 	}
 
-	static void TopPart(View container)
+	static View TopPart()
 	{
 		var cc = new ColorScheme();
 		cc.Normal = Terminal.Gui.Attribute.Make(Color.Red, Color.Black);
@@ -78,18 +85,19 @@ class Demo {
 
 		Application.MainLoop.AddTimeout(TimeSpan.FromMilliseconds(300), timer);
 
+		var margin = 1;
 		FrameView frame = new FrameView("CPU")
 		{
-			X = 0,
-			Y = 0,
-			Width = 50,
-			Height = 10
+			X = 0 + margin,
+			Y = 0 + margin,
+			Width = Dim.Percent(50) -margin,
+			Height = Dim.Percent(50) - margin
 		};
 
 		frame.Add(core0);
 		frame.Add(core1);
 
-		container.Add(frame);
+		return frame;
 	}
 
 	static void ShowEntries(View container)
@@ -241,7 +249,7 @@ class Demo {
 
 	public static Label ml;
 
-	static void CreateEditor(View parent)
+	static View CreateEditor()
 	{
 		string fname = null;
 		foreach (var s in new[] { "/etc/passwd", @"c:\Users\pablo\plastic\server\loader.log.txt" })
@@ -262,14 +270,10 @@ class Demo {
 
 		text.ReadOnly = true;
 
-		FrameView frame = new FrameView("Process list")
-		{
-			Y = Pos.Bottom(parent) - 20,
-			Height = 20 - 3
-		};
+		FrameView frame = new FrameView("Process list");
 
 		frame.Add(text);
 
-		parent.Add(frame);
+		return frame;
 	}
 }
