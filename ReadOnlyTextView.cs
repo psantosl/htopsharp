@@ -29,8 +29,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using NStack;
+using Terminal.Gui;
 
-namespace Terminal.Gui
+namespace htopsharp
 {
 	/// <summary>
 	///   Like a "less" to navigate lines
