@@ -32,138 +32,8 @@ using NStack;
 
 namespace Terminal.Gui
 {
-	class TextModel
-	{
-		List<List<Rune>> lines = new List<List<Rune>>();
-
-		public bool LoadFile(string file)
-		{
-			if (file == null)
-				throw new ArgumentNullException(nameof(file));
-			try
-			{
-				var stream = File.OpenRead(file);
-			}
-			catch
-			{
-				return false;
-			}
-			LoadStream(File.OpenRead(file));
-			return true;
-		}
-
-		// Turns the ustring into runes, this does not split the 
-		// contents on a newline if it is present.
-		internal static List<Rune> ToRunes(ustring str)
-		{
-			List<Rune> runes = new List<Rune>();
-			foreach (var x in str.ToRunes())
-			{
-				runes.Add(x);
-			}
-			return runes;
-		}
-
-		// Splits a string into a List that contains a List<Rune> for each line
-		public static List<List<Rune>> StringToRunes(ustring content)
-		{
-			var lines = new List<List<Rune>>();
-			int start = 0, i = 0;
-			for (; i < content.Length; i++)
-			{
-				if (content[i] == 10)
-				{
-					if (i - start > 0)
-						lines.Add(ToRunes(content[start, i]));
-					else
-						lines.Add(ToRunes(ustring.Empty));
-					start = i + 1;
-				}
-			}
-			if (i - start >= 0)
-				lines.Add(ToRunes(content[start, null]));
-			return lines;
-		}
-
-		void Append(List<byte> line)
-		{
-			var str = ustring.Make(line.ToArray());
-			lines.Add(ToRunes(str));
-		}
-
-		public void LoadStream(Stream input)
-		{
-			if (input == null)
-				throw new ArgumentNullException(nameof(input));
-
-			lines = new List<List<Rune>>();
-			var buff = new BufferedStream(input);
-			int v;
-			var line = new List<byte>();
-			while ((v = buff.ReadByte()) != -1)
-			{
-				if (v == 10)
-				{
-					Append(line);
-					line.Clear();
-					continue;
-				}
-				line.Add((byte)v);
-			}
-			if (line.Count > 0)
-				Append(line);
-		}
-
-		public void LoadString(ustring content)
-		{
-			lines = StringToRunes(content);
-		}
-
-		public override string ToString()
-		{
-			var sb = new StringBuilder();
-			foreach (var line in lines)
-			{
-				sb.Append(ustring.Make(line));
-				sb.AppendLine();
-			}
-			return sb.ToString();
-		}
-
-		/// <summary>
-		/// The number of text lines in the model
-		/// </summary>
-		public int Count => lines.Count;
-
-		/// <summary>
-		/// Returns the specified line as a List of Rune
-		/// </summary>
-		/// <returns>The line.</returns>
-		/// <param name="line">Line number to retrieve.</param>
-		public List<Rune> GetLine(int line) => line < Count ? lines[line] : lines[Count - 1];
-
-		/// <summary>
-		/// Adds a line to the model at the specified position.
-		/// </summary>
-		/// <param name="pos">Line number where the line will be inserted.</param>
-		/// <param name="runes">The line of text, as a List of Rune.</param>
-		public void AddLine(int pos, List<Rune> runes)
-		{
-			lines.Insert(pos, runes);
-		}
-
-		/// <summary>
-		/// Removes the line at the specified position
-		/// </summary>
-		/// <param name="pos">Position.</param>
-		public void RemoveLine(int pos)
-		{
-			lines.RemoveAt(pos);
-		}
-	}
-
 	/// <summary>
-	///   Multi-line text editing view
+	///   Like a "less" to navigate lines
 	/// </summary>
 	/// <remarks>
 	///   <para>
@@ -266,7 +136,7 @@ namespace Terminal.Gui
 	///     </item>
 	///   </list>
 	/// </remarks>
-	public class TextView : View
+	public class ReadOnlyTextView : View
 	{
 		TextModel model = new TextModel();
 		int topRow;
@@ -294,7 +164,7 @@ namespace Terminal.Gui
 		/// </summary>
 		/// <remarks>
 		/// </remarks>
-		public TextView(Rect frame) : base(frame)
+		public ReadOnlyTextView(Rect frame) : base(frame)
 		{
 			CanFocus = true;
 		}
@@ -302,7 +172,7 @@ namespace Terminal.Gui
 		/// <summary>
 		/// Public constructor, creates a view on the specified area, with dimensions controlled with the X, Y, Width and Height properties.
 		/// </summary>
-		public TextView() : base()
+		public ReadOnlyTextView() : base()
 		{
 			CanFocus = true;
 		}
@@ -1255,6 +1125,136 @@ namespace Terminal.Gui
 			}
 			PositionCursor();
 			return true;
+		}
+
+		class TextModel
+		{
+			List<List<Rune>> lines = new List<List<Rune>>();
+
+			public bool LoadFile(string file)
+			{
+				if (file == null)
+					throw new ArgumentNullException(nameof(file));
+				try
+				{
+					var stream = File.OpenRead(file);
+				}
+				catch
+				{
+					return false;
+				}
+				LoadStream(File.OpenRead(file));
+				return true;
+			}
+
+			// Turns the ustring into runes, this does not split the 
+			// contents on a newline if it is present.
+			internal static List<Rune> ToRunes(ustring str)
+			{
+				List<Rune> runes = new List<Rune>();
+				foreach (var x in str.ToRunes())
+				{
+					runes.Add(x);
+				}
+				return runes;
+			}
+
+			// Splits a string into a List that contains a List<Rune> for each line
+			public static List<List<Rune>> StringToRunes(ustring content)
+			{
+				var lines = new List<List<Rune>>();
+				int start = 0, i = 0;
+				for (; i < content.Length; i++)
+				{
+					if (content[i] == 10)
+					{
+						if (i - start > 0)
+							lines.Add(ToRunes(content[start, i]));
+						else
+							lines.Add(ToRunes(ustring.Empty));
+						start = i + 1;
+					}
+				}
+				if (i - start >= 0)
+					lines.Add(ToRunes(content[start, null]));
+				return lines;
+			}
+
+			void Append(List<byte> line)
+			{
+				var str = ustring.Make(line.ToArray());
+				lines.Add(ToRunes(str));
+			}
+
+			public void LoadStream(Stream input)
+			{
+				if (input == null)
+					throw new ArgumentNullException(nameof(input));
+
+				lines = new List<List<Rune>>();
+				var buff = new BufferedStream(input);
+				int v;
+				var line = new List<byte>();
+				while ((v = buff.ReadByte()) != -1)
+				{
+					if (v == 10)
+					{
+						Append(line);
+						line.Clear();
+						continue;
+					}
+					line.Add((byte)v);
+				}
+				if (line.Count > 0)
+					Append(line);
+			}
+
+			public void LoadString(ustring content)
+			{
+				lines = StringToRunes(content);
+			}
+
+			public override string ToString()
+			{
+				var sb = new StringBuilder();
+				foreach (var line in lines)
+				{
+					sb.Append(ustring.Make(line));
+					sb.AppendLine();
+				}
+				return sb.ToString();
+			}
+
+			/// <summary>
+			/// The number of text lines in the model
+			/// </summary>
+			public int Count => lines.Count;
+
+			/// <summary>
+			/// Returns the specified line as a List of Rune
+			/// </summary>
+			/// <returns>The line.</returns>
+			/// <param name="line">Line number to retrieve.</param>
+			public List<Rune> GetLine(int line) => line < Count ? lines[line] : lines[Count - 1];
+
+			/// <summary>
+			/// Adds a line to the model at the specified position.
+			/// </summary>
+			/// <param name="pos">Line number where the line will be inserted.</param>
+			/// <param name="runes">The line of text, as a List of Rune.</param>
+			public void AddLine(int pos, List<Rune> runes)
+			{
+				lines.Insert(pos, runes);
+			}
+
+			/// <summary>
+			/// Removes the line at the specified position
+			/// </summary>
+			/// <param name="pos">Position.</param>
+			public void RemoveLine(int pos)
+			{
+				lines.RemoveAt(pos);
+			}
 		}
 	}
 
