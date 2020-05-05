@@ -211,7 +211,7 @@ class Demo {
 		var menu = new MenuBar (new MenuBarItem [] {
 			new MenuBarItem ("_File", new MenuItem [] {
 				new MenuItem ("_New", "Creates new file", NewFile),
-				new MenuItem ("_Open", "", null),
+				new MenuItem ("Text _Editor Demo", "", () => { Editor (top); }),
 				new MenuItem ("_Close", "", () => Close ()),
 				new MenuItem ("_Quit", "", () => { if (Quit ()) top.Running = false; })
 			}),
@@ -234,5 +234,49 @@ class Demo {
 		top.Add (win, menu);
 		top.Add (menu);
 		Application.Run ();
+	}
+
+	static void Editor(Toplevel top)
+	{
+		var tframe = top.Frame;
+		var ntop = new Toplevel(tframe);
+		var menu = new MenuBar(new MenuBarItem[] {
+			new MenuBarItem ("_File", new MenuItem [] {
+				new MenuItem ("_Close", "", () => {Application.RequestStop ();}),
+			}),
+			new MenuBarItem ("_Edit", new MenuItem [] {
+				new MenuItem ("_Copy", "", null),
+				new MenuItem ("C_ut", "", null),
+				new MenuItem ("_Paste", "", null)
+			}),
+		});
+		ntop.Add(menu);
+
+		string fname = null;
+		foreach (var s in new[] { "/etc/passwd", @"c:\Users\pablo\plastic\server\loader.log.txt" })
+			if (System.IO.File.Exists(s))
+			{
+				fname = s;
+				break;
+			}
+
+		var win = new Window(fname ?? "Untitled")
+		{
+			X = 0,
+			Y = 1,
+			Width = Dim.Fill(),
+			Height = Dim.Fill()
+		};
+		ntop.Add(win);
+
+		var text = new ReadOnlyTextView(new Rect(0, 0, tframe.Width - 2, tframe.Height - 3));
+
+		if (fname != null)
+			text.Text = System.IO.File.ReadAllText(fname);
+
+		text.ReadOnly = true;
+		win.Add(text);
+
+		Application.Run(ntop);
 	}
 }
