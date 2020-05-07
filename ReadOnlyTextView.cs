@@ -145,8 +145,6 @@ namespace htopsharp
 		int currentRow;
 		int currentColumn;
 		int selectionStartColumn, selectionStartRow;
-		bool selecting;
-		//bool used;
 
 		public event EventHandler TextChanged;
 
@@ -415,7 +413,6 @@ namespace htopsharp
 					var lineCol = leftColumn + col;
 					var rune = lineCol >= lineRuneCount ? ' ' : line[lineCol];
 
-					//if (selecting && PointInSelection (col, row))
 					if (CurrentRow == textLine)
 						ColorSelection();
 					else
@@ -471,57 +468,6 @@ namespace htopsharp
 		}
 
 		List<Rune> GetCurrentLine() => model.GetLine(currentRow);
-
-		void InsertText(ustring text)
-		{
-			var lines = TextModel.StringToRunes(text);
-
-			if (lines.Count == 0)
-				return;
-
-			var line = GetCurrentLine();
-
-			// Optmize single line
-			if (lines.Count == 1)
-			{
-				line.InsertRange(currentColumn, lines[0]);
-				currentColumn += lines[0].Count;
-				if (currentColumn - leftColumn > Frame.Width)
-					leftColumn = currentColumn - Frame.Width + 1;
-				SetNeedsDisplay(new Rect(0, currentRow - topRow, Frame.Width, currentRow - topRow + 1));
-				return;
-			}
-
-			// Keep a copy of the rest of the line
-			var restCount = line.Count - currentColumn;
-			var rest = line.GetRange(currentColumn, restCount);
-			line.RemoveRange(currentColumn, restCount);
-
-			// First line is inserted at the current location, the rest is appended
-			line.InsertRange(currentColumn, lines[0]);
-
-			for (int i = 1; i < lines.Count; i++)
-				model.AddLine(currentRow + i, lines[i]);
-
-			var last = model.GetLine(currentRow + lines.Count - 1);
-			var lastp = last.Count;
-			last.InsertRange(last.Count, rest);
-
-			// Now adjjust column and row positions
-			currentRow += lines.Count - 1;
-			currentColumn = lastp;
-			if (currentRow - topRow > Frame.Height)
-			{
-				topRow = currentRow - Frame.Height + 1;
-				if (topRow < 0)
-					topRow = 0;
-			}
-			if (currentColumn < leftColumn)
-				leftColumn = currentColumn;
-			if (currentColumn - leftColumn >= Frame.Width)
-				leftColumn = currentColumn - Frame.Width + 1;
-			SetNeedsDisplay();
-		}
 
 		// The column we are tracking, or -1 if we are not tracking any column
 		int columnTrack = -1;
@@ -853,29 +799,19 @@ namespace htopsharp
 					lastWasKill = true;
 					break;
 
-				case Key.ControlY: // Control-y, yank
-					if (isReadOnly)
-						break;
-					InsertText(Clipboard.Contents);
-					selecting = false;
-					break;
-
 				case Key.ControlSpace:
-					selecting = true;
 					selectionStartColumn = currentColumn;
 					selectionStartRow = currentRow;
 					break;
 
 				case ((int)'w' + Key.AltMask):
 					SetClipboard(GetRegion());
-					selecting = false;
 					break;
 
 				case Key.ControlW:
 					SetClipboard(GetRegion());
 					if (!isReadOnly)
 						ClearRegion();
-					selecting = false;
 					break;
 
 				case (Key)((int)'b' + Key.AltMask):
@@ -946,28 +882,6 @@ namespace htopsharp
 					return true;
 			}
 			return true;
-		}
-
-		IEnumerable<(int col, int row, Rune rune)> ForwardIterator(int col, int row)
-		{
-			if (col < 0 || row < 0)
-				yield break;
-			if (row >= model.Count)
-				yield break;
-			var line = GetCurrentLine();
-			if (col >= line.Count)
-				yield break;
-
-			while (row < model.Count)
-			{
-				for (int c = col; c < line.Count; c++)
-				{
-					yield return (c, row, line[c]);
-				}
-				col = 0;
-				row++;
-				line = GetCurrentLine();
-			}
 		}
 
 		Rune RuneAt(int col, int row) => model.GetLine(row)[col];
