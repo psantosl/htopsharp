@@ -16,13 +16,6 @@ class Demo {
 
 		top.ColorScheme.Normal = Terminal.Gui.Attribute.Make(Color.White, Color.Black);
 
-		var menu = new MenuBar(new MenuBarItem[] {
-			new MenuBarItem ("_File", new MenuItem [] {
-				new MenuItem ("_Close", "", () => Close ()),
-				new MenuItem ("_Quit", "", () => { if (Quit ()) top.Running = false; })
-			})
-		});
-
 		View cpuArea = CreateCpuArea();
 
 		View processArea = CreateProcessArea();
@@ -39,8 +32,14 @@ class Demo {
 		processArea.Width = Dim.Fill(margin);
 		processArea.Height = Dim.Fill(margin);
 
-		top.Add(cpuArea, processArea, menu);
+		top.Add(cpuArea, processArea);
 
+		var statusBar = new StatusBar(new StatusItem[] {
+			new StatusItem(Key.F10, "~F10~ Quit", () => { if (Quit ()) top.Running = false; }),
+		});
+		statusBar.ColorScheme.Normal = Terminal.Gui.Attribute.Make(Color.Black, Color.Green);
+
+		top.Add(statusBar);
 		Application.Run();
 	}
 
@@ -123,7 +122,7 @@ class Demo {
 
 	static bool Quit ()
 	{
-		var n = MessageBox.Query (50, 7, "Quit Demo", "Are you sure you want to quit this demo?", "Yes", "No");
+		var n = MessageBox.Query (50, 7, "Quit", "Are you sure you want to quit htopsharp?", "Yes", "No");
 		return n == 0;
 	}
 
