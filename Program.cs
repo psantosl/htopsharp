@@ -3,6 +3,7 @@ using System;
 using Mono.Terminal;
 
 using htopsharp;
+using System.Collections.Generic;
 
 class Demo {
 	static void Main()
@@ -52,53 +53,44 @@ class Demo {
 		var labelColorScheme = new ColorScheme();
 		labelColorScheme.Normal = Terminal.Gui.Attribute.Make(Color.BrighCyan, Color.Black);
 
+		var cores = new List<HtopProgressBar>();
+
 		FrameView frame = new FrameView("CPU");
 
-		var labelCore0 = new Label("0:")
+		for (int i = 0; i < 8; ++i)
 		{
-			X = 0,
-			Y = 0,
-			ColorScheme = labelColorScheme
-		};
+			var labelCore = new Label(i + ":")
+			{
+				X = 0,
+				Y = i,
+				ColorScheme = labelColorScheme
+			};
 
-		var core0 = new HtopProgressBar()
-		{
-			X = Pos.Right(labelCore0) + 1,
-			Height = 1,
-			Width = Dim.Fill()
-		};
+			var core = new HtopProgressBar()
+			{
+				X = Pos.Right(labelCore) + 1,
+				Y = i,
+				Height = 1,
+				Width = Dim.Fill(),
+				ColorScheme = progressColorScheme
+			};
 
-		var labelCore1 = new Label("1:")
-		{
-			X = 0,
-			Y = 1,
-			ColorScheme = labelColorScheme
-		};
+			cores.Add(core);
 
-		var core1 = new HtopProgressBar()
-		{
-			X = Pos.Right(labelCore1) + 1,
-			Height = 1,
-			Y = 1,
-			Width = Dim.Fill()
-		};
-
-		core0.ColorScheme = progressColorScheme;
-		core1.ColorScheme = progressColorScheme;
+			frame.Add(labelCore, core);
+		}
 
 		Random rnd = new Random();
 
 		bool timer(MainLoop caller)
 		{
-			core0.Fraction = (float) rnd.NextDouble();
-			core1.Fraction = (float) rnd.NextDouble();
+			foreach (var core in cores)
+				core.Fraction = (float) rnd.NextDouble();
+
 			return true;
 		}
 
 		Application.MainLoop.AddTimeout(TimeSpan.FromMilliseconds(600), timer);
-
-
-		frame.Add(labelCore0, core0, labelCore1, core1);
 
 		return frame;
 	}
