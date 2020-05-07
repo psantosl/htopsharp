@@ -1,5 +1,5 @@
 # htopsharp
-htop-like demo application based on ![gui.cs](https://github.com/migueldeicaza/gui.cs)
+htop-like demo application based on [gui.cs](https://github.com/migueldeicaza/gui.cs)
 
 ![htopsharp running](https://github.com/psantosl/htopsharp/blob/master/images/htopsharp-initial-demo.gif)
 
