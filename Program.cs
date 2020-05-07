@@ -13,227 +13,120 @@ class Demo {
 		var top = Application.Top;
 		var tframe = top.Frame;
 
-		var win = new Window("HtopSharp")
-		{
-			X = 0,
-			Y = 1,
-			Width = Dim.Fill(),
-			Height = Dim.Fill() - 2
-		};
-
-		win.ColorScheme.Normal = Terminal.Gui.Attribute.Make(Color.White, Color.Black);
+		top.ColorScheme.Normal = Terminal.Gui.Attribute.Make(Color.White, Color.Black);
 
 		var menu = new MenuBar(new MenuBarItem[] {
 			new MenuBarItem ("_File", new MenuItem [] {
-				new MenuItem ("_New", "Creates new file", NewFile),
 				new MenuItem ("_Close", "", () => Close ()),
 				new MenuItem ("_Quit", "", () => { if (Quit ()) top.Running = false; })
 			})
 		});
 
-		View topPart = TopPart();
+		View cpuArea = CreateCpuArea();
 
-		View editorPart = CreateEditor();
+		View processArea = CreateProcessArea();
 
-		editorPart.X = 0 + 1;
-		editorPart.Y = Pos.Bottom(topPart) + 1;
-		editorPart.Width = Dim.Fill(1);
-		editorPart.Height = Dim.Fill(1);
+		int margin = 1;
 
-		win.Add(topPart, editorPart);
+		cpuArea.X = 0 + margin;
+		cpuArea.Y = 0 + margin;
+		cpuArea.Width = Dim.Percent(50) - margin;
+		cpuArea.Height = Dim.Percent(30) - margin;
 
-		top.Add(win, menu);
-		top.Add(menu);
+		processArea.X = 0 + margin;
+		processArea.Y = Pos.Bottom(cpuArea) + margin;
+		processArea.Width = Dim.Fill(margin);
+		processArea.Height = Dim.Fill(margin);
+
+		top.Add(cpuArea, processArea, menu);
+
 		Application.Run();
 	}
 
-	static View TopPart()
+	static View CreateCpuArea()
 	{
-		var cc = new ColorScheme();
-		cc.Normal = Terminal.Gui.Attribute.Make(Color.Red, Color.Black);
-		cc.Focus = Terminal.Gui.Attribute.Make(Color.White, Color.DarkGray);
+		var progressColorScheme = new ColorScheme();
+		progressColorScheme.Normal = Terminal.Gui.Attribute.Make(Color.BrightGreen, Color.Black);
+		progressColorScheme.Focus = Terminal.Gui.Attribute.Make(Color.White, Color.DarkGray);
+
+		var labelColorScheme = new ColorScheme();
+		labelColorScheme.Normal = Terminal.Gui.Attribute.Make(Color.BrighCyan, Color.Black);
+
+		FrameView frame = new FrameView("CPU");
+
+		var labelCore0 = new Label("0:")
+		{
+			X = 0,
+			Y = 0,
+			ColorScheme = labelColorScheme
+		};
 
 		var core0 = new HtopProgressBar()
 		{
+			X = Pos.Right(labelCore0) + 1,
 			Height = 1,
 			Width = Dim.Fill()
 		};
 
+		var labelCore1 = new Label("1:")
+		{
+			X = 0,
+			Y = 1,
+			ColorScheme = labelColorScheme
+		};
+
 		var core1 = new HtopProgressBar()
 		{
+			X = Pos.Right(labelCore1) + 1,
 			Height = 1,
 			Y = 1,
 			Width = Dim.Fill()
 		};
 
-		core0.ColorScheme = cc;
-		core1.ColorScheme = cc;
+		core0.ColorScheme = progressColorScheme;
+		core1.ColorScheme = progressColorScheme;
 
-		float fraction = 0;
+		Random rnd = new Random();
 
 		bool timer(MainLoop caller)
 		{
-			fraction += 0.05f;
-
-			if (fraction > 1)
-				fraction = 0;
-
-			core0.Fraction = fraction;
-			core1.Fraction = fraction;
+			core0.Fraction = (float) rnd.NextDouble();
+			core1.Fraction = (float) rnd.NextDouble();
 			return true;
 		}
 
-		Application.MainLoop.AddTimeout(TimeSpan.FromMilliseconds(300), timer);
+		Application.MainLoop.AddTimeout(TimeSpan.FromMilliseconds(600), timer);
 
-		var margin = 1;
-		FrameView frame = new FrameView("CPU")
-		{
-			X = 0 + margin,
-			Y = 0 + margin,
-			Width = Dim.Percent(50) -margin,
-			Height = Dim.Percent(50) - margin
-		};
 
-		frame.Add(core0);
-		frame.Add(core1);
+		frame.Add(labelCore0, core0, labelCore1, core1);
 
 		return frame;
 	}
 
-	static void ShowEntries(View container)
+	static View CreateProcessArea()
 	{
-		var scrollView = new ScrollView(new Rect(50, 10, 20, 8))
+		var text = new ReadOnlyTextView()
 		{
-			ContentSize = new Size(100, 100),
-			ContentOffset = new Point(-1, -1),
-			ShowVerticalScrollIndicator = true,
-			ShowHorizontalScrollIndicator = true
+			Width = Dim.Fill(),
+			Height = Dim.Fill()
 		};
 
-		scrollView.Add(new Box10x(0, 0));
-		//scrollView.Add (new Filler (new Rect (0, 0, 40, 40)));
+		text.Text =
+@"PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
+    1 root      20   0    8892    308    272 S   0.0  0.0   0:00.12 init
+    5 root      20   0    8908    224    172 S   0.0  0.0   0:00.00 init
+    6 pablo     20   0   16276   3792   3520 S   0.0  0.0   0:00.54 bash
+   74 root      20   0    8908    224    172 S   0.0  0.0   0:00.01 init
+   75 pablo     20   0   16260   3648   3544 S   0.0  0.0   0:00.11 bash
+   92 pablo     20   0   14560   1544   1072 R   0.0  0.0   0:00.00 top";
 
-		var progress = new HtopProgressBar(new Rect(68, 1, 10, 1));
+		text.ReadOnly = true;
 
-		var cc = new ColorScheme();
-		cc.Normal = Terminal.Gui.Attribute.Make(Color.Red, Color.Black);
-		cc.Focus = Terminal.Gui.Attribute.Make(Color.White, Color.DarkGray);
+		FrameView frame = new FrameView("Process list");
 
-		progress.ColorScheme = cc;
+		frame.Add(text);
 
-		float fraction = 0;
-
-		bool timer(MainLoop caller)
-		{
-			fraction += 0.05f;
-
-			if (fraction > 1)
-				fraction = 0;
-
-			progress.Fraction = fraction;
-			return true;
-		}
-
-		Application.MainLoop.AddTimeout(TimeSpan.FromMilliseconds(300), timer);
-
-		// A little convoluted, this is because I am using this to test the
-		// layout based on referencing elements of another view:
-
-		var login = new Label("Login: ") { X = 3, Y = 6 };
-		var password = new Label("Password: ")
-		{
-			X = Pos.Left(login),
-			Y = Pos.Bottom(login) + 1
-		};
-		var loginText = new TextField("")
-		{
-			X = Pos.Right(password),
-			Y = Pos.Top(login),
-			Width = 40
-		};
-		var passText = new TextField("")
-		{
-			Secret = true,
-			X = Pos.Left(loginText),
-			Y = Pos.Top(password),
-			Width = Dim.Width(loginText)
-		};
-		var c = new ColorScheme();
-		c.Normal = Terminal.Gui.Attribute.Make(Color.White, Color.Gray);
-		c.Focus = Terminal.Gui.Attribute.Make(Color.White, Color.DarkGray);
-
-		loginText.ColorScheme = c;
-
-		// This is just to debug the visuals of the scrollview when small
-		var scrollView2 = new ScrollView(new Rect(0, 0, 50, 4))
-		{
-			ContentSize = new Size(120, 10),
-			ShowVerticalScrollIndicator = true,
-			ShowHorizontalScrollIndicator = true
-		};
-
-		var listView = new ListView(new string[] {
-"Name                                      Request IP              Time      Thread   Status   Protocol  Sec  User",
-"Unknown-plasticproto                           22 127.0.0.1       00:00:00  26       Proto    Plastic   None",
-"CalculateMerge                                 21 127.0.0.1       00:00:00  24       Read     Plastic   None pablo"
-			});
-
-		listView.Width = Dim.Fill();
-		listView.Height = Dim.Fill();
-
-		scrollView2.Add(listView);
-
-		// Add some content
-		container.Add(
-			login,
-			loginText,
-			password,
-			passText,
-			new FrameView(new Rect(3, 10, 25, 6), "Options"){
-				new CheckBox (1, 0, "Remember me"),
-				new RadioGroup (1, 2, new [] { "_Personal", "_Company" }),
-			},
-			//scrollView,
-			scrollView2,
-			new Button("Ok") { X = 3, Y = 19 },
-			new Button("Cancel") { X = 10, Y = 19 },
-			progress,
-			new Label("Press F9 (on Unix ESC+9 is an alias) to activate the menubar") { X = 3, Y = 22 }
-		);
-
-	}
-
-	class Box10x : View {
-		public Box10x (int x, int y) : base (new Rect (x, y, 10, 10))
-		{
-		}
-
-		public override void Redraw (Rect region)
-		{
-			Driver.SetAttribute (ColorScheme.Focus);
-
-			for (int y = 0; y < 10; y++) {
-				Move (0, y);
-				for (int x = 0; x < 10; x++) {
-
-					Driver.AddRune ((Rune)('0' + (x + y) % 10));
-				}
-			}
-
-		}
-	}
-
-	public static Label ml2;
-
-	static void NewFile ()
-	{
-		var d = new Dialog (
-			"New File", 50, 20,
-			new Button ("Ok", is_default: true) { Clicked = () => { Application.RequestStop (); } },
-			new Button ("Cancel") { Clicked = () => { Application.RequestStop (); } });
-		ml2 = new Label (1, 1, "Mouse Debug Line");
-		d.Add (ml2);
-		Application.Run (d);
+		return frame;
 	}
 
 	static bool Quit ()
@@ -245,35 +138,5 @@ class Demo {
 	static void Close ()
 	{
 		MessageBox.ErrorQuery (50, 5, "Error", "There is nothing to close", "Ok");
-	}
-
-	public static Label ml;
-
-	static View CreateEditor()
-	{
-		string fname = null;
-		foreach (var s in new[] { "/etc/passwd", @"c:\Users\pablo\plastic\server\loader.log.txt" })
-			if (System.IO.File.Exists(s))
-			{
-				fname = s;
-				break;
-			}
-
-		var text = new ReadOnlyTextView()
-		{
-			Width = Dim.Fill(),
-			Height = Dim.Fill()
-		};
-
-		if (fname != null)
-			text.Text = System.IO.File.ReadAllText(fname);
-
-		text.ReadOnly = true;
-
-		FrameView frame = new FrameView("Process list");
-
-		frame.Add(text);
-
-		return frame;
 	}
 }

@@ -43,42 +43,11 @@ namespace htopsharp
 			}
 		}
 
-		/// <summary>
-		/// Notifies the progress bar that some progress has taken place.
-		/// </summary>
-		/// <remarks>
-		/// If the ProgressBar is is percentage mode, it switches to activity
-		/// mode.   If is in activity mode, the marker is moved.
-		/// </remarks>
-		public void Pulse()
-		{
-			if (!isActivity)
-			{
-				isActivity = true;
-				activityPos = 0;
-				delta = 1;
-			}
-			else
-			{
-				activityPos += delta;
-				if (activityPos < 0)
-				{
-					activityPos = 1;
-					delta = 1;
-				}
-				else if (activityPos >= Frame.Width)
-				{
-					activityPos = Frame.Width - 2;
-					delta = -1;
-				}
-			}
-
-			SetNeedsDisplay();
-		}
-
 		public override void Redraw(Rect region)
 		{
 			Driver.SetAttribute(ColorScheme.Normal);
+
+			Attribute end = Attribute.Make(Color.BrightRed, Color.Black);
 
 			int top = Frame.Width;
 			if (isActivity)
@@ -86,18 +55,33 @@ namespace htopsharp
 				Move(0, 0);
 				Driver.AddRune('|');
 				for (int i = 0; i < top; i++)
+				{
+					if (i > (top * 0.8))
+					{
+						Driver.SetAttribute(end);
+					}
+
 					if (i == activityPos)
 						Driver.AddRune('|');
 					else
 						Driver.AddRune(' ');
+				}
 			}
 			else
 			{
 				Move(0, 0);
 				int mid = (int)(fraction * top);
+
+				int limit = (int)(0.8 * top);
+
 				int i;
 				for (i = 0; i < mid; i++)
+				{
+					if ( i > limit)
+						Driver.SetAttribute(end);
+
 					Driver.AddRune('|');
+				}
 				for (; i < top; i++)
 					Driver.AddRune(' ');
 			}
