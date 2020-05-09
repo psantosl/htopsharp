@@ -33,6 +33,7 @@ using Terminal.Gui;
 
 namespace htopsharp
 {
+	using Rune = System.Rune;
 	/// <summary>
 	///   Like a "less" to navigate lines
 	/// </summary>

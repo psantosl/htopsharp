@@ -43,11 +43,11 @@ namespace htopsharp
 			}
 		}
 
+		Attribute end = Attribute.Make(Color.BrightRed, Color.Black);
+
 		public override void Redraw(Rect region)
 		{
 			Driver.SetAttribute(ColorScheme.Normal);
-
-			Attribute end = Attribute.Make(Color.BrightRed, Color.Black);
 
 			int top = Frame.Width;
 			if (isActivity)
@@ -82,6 +82,9 @@ namespace htopsharp
 
 					Driver.AddRune('|');
 				}
+
+				Driver.SetAttribute(ColorScheme.Normal);
+
 				for (; i < top; i++)
 					Driver.AddRune(' ');
 			}

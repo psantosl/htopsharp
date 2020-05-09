@@ -35,7 +35,7 @@ class Demo {
 		top.Add(cpuArea, processArea);
 
 		var statusBar = new StatusBar(new StatusItem[] {
-			new StatusItem(Key.F10, "~F10~ Quit", () => { if (Quit ()) top.Running = false; }),
+			new StatusItem(Key.Esc, "ESC Quit", () => { if (Quit ()) top.Running = false; }),
 		});
 		statusBar.ColorScheme.Normal = Terminal.Gui.Attribute.Make(Color.Black, Color.Green);
 
